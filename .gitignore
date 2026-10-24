@@ -1,0 +1,12 @@
+node_modules/
+java-scanner/target/
+findings.json
+python-findings.json
+java-findings.json
+risk-findings.json
+risk-report.json
+extra-report.json
+scanner-errors.json
+cbom.json
+cbom-dashboard.html
+*.tmp

@@ -1,0 +1,27 @@
+{
+  "name": "ast-scanner",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "scan": "node run-all.js",
+    "scan:all": "node unified-scanner.js",
+    "scan:complete": "node complete-scanner.js",
+    "scan:js": "node scanner.js",
+    "scan:python": "python python-scanner.py",
+    "scan:risk": "node risk-report.js",
+    "scan:ci": "node unified-scanner.js --fail-on high",
+    "validate:cbom": "node validate-cbom.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@babel/parser": "^7.29.9",
+    "@babel/traverse": "^8.0.6",
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
+  }
+}

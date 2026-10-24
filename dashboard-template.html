@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Crypto inventory</title>
+<style>
+:root{--bg:#f6f7f9;--fg:#18212b;--mut:#5d6b7a;--card:#fff;--bd:#dde2e8;--critical:#8f1d21;--high:#c8431f;--medium:#d99a1e;--low:#5b8db8;--unknown:#8b96a3;--safe:#3f7d5c}
+@media(prefers-color-scheme:dark){:root{--bg:#12171d;--fg:#e6eaef;--mut:#94a1af;--card:#1a2129;--bd:#2c3641;--critical:#e0565b;--high:#ee7a52;--medium:#e8b13f;--low:#7fb0d8;--unknown:#8b96a3;--safe:#62b08a}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1100px;margin:0 auto;padding:28px 18px 60px}h1{font-size:1.6rem;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--mut);margin:0 0 22px}.bar{display:flex;height:34px;border-radius:6px;overflow:hidden;background:var(--bd)}
+.bar div{min-width:2px}.legend{display:flex;flex-wrap:wrap;gap:6px 18px;margin:10px 0 24px;color:var(--mut);font-size:.9rem}
+.legend b{color:var(--fg);font-weight:600}.sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}input,select{font:inherit;padding:7px 10px;border:1px solid var(--bd);border-radius:6px;background:var(--card);color:var(--fg)}
+input{flex:1;min-width:200px}table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--bd);border-radius:8px;overflow:hidden}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--bd);vertical-align:top}th{font-weight:600;color:var(--mut);font-size:.85rem}
+tr.row{cursor:pointer}tr.row:hover td{background:color-mix(in srgb,var(--fg) 4%,transparent)}tr.row:focus-visible{outline:2px solid var(--low);outline-offset:-2px}
+.tag{display:inline-block;padding:1px 9px;border-radius:99px;font-size:.8rem;font-weight:600;color:#fff}.q{color:var(--high);font-weight:600}
+.det td{background:color-mix(in srgb,var(--fg) 3%,transparent)}.det p{margin:0 0 6px}.loc{font:.85rem ui-monospace,Consolas,monospace;color:var(--mut)}
+.wrap{overflow-x:auto}.empty{padding:28px;text-align:center;color:var(--mut)}
+</style></head><body><main>
+<h1>Cryptographic inventory</h1><p class="sub" id="sub"></p>
+<div class="bar" id="bar" role="img" aria-label="Findings by risk level"></div><div class="legend" id="leg"></div>
+<div class="ctl"><input id="q" placeholder="Search algorithm, file or reason" aria-label="Search"><select id="sev" aria-label="Risk level"><option value="">All risk levels</option></select><select id="cat" aria-label="Category"><option value="">All categories</option></select></div>
+<div class="wrap"><table><thead><tr><th>Risk</th><th>Asset</th><th>Category</th><th>Quantum</th><th>Size / mode</th><th>Locations</th></tr></thead><tbody id="tb"></tbody></table></div>
+<script type="application/json" id="d">__DATA__</script>
+<script>
+const D=JSON.parse(document.getElementById("d").textContent),L=["critical","high","medium","low","unknown","safe"],$=s=>document.getElementById(s);
+const el=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const items=D.items.slice().sort((a,b)=>L.indexOf(a.risk)-L.indexOf(b.risk)||a.algorithm.localeCompare(b.algorithm));
+const cnt=r=>items.filter(i=>i.risk===r).length,qv=items.filter(i=>i.quantum==="vulnerable").length;
+$("sub").textContent=`${items.length} assets, ${qv} quantum-vulnerable. Generated ${new Date(D.generatedAt).toLocaleString()}.`;
+L.forEach(r=>{const n=cnt(r);if(n){const b=el("div");b.style.flex=n;b.style.background=`var(--${r})`;b.title=`${r}: ${n}`;$("bar").append(b)}
+ const g=el("span");const s=el("span","sw");s.style.background=`var(--${r})`;const b=el("b",null,n);g.append(s,b,` ${r}`);$("leg").append(g);
+ const o=el("option",null,r);o.value=r;$("sev").append(o)});
+[...new Set(items.map(i=>i.category))].forEach(c=>{const o=el("option",null,c);o.value=c;$("cat").append(o)});
+function render(){const q=$("q").value.toLowerCase(),s=$("sev").value,c=$("cat").value,tb=$("tb");tb.replaceChildren();
+ const rows=items.filter(i=>(!s||i.risk===s)&&(!c||i.category===c)&&(!q||JSON.stringify(i).toLowerCase().includes(q)));
+ if(!rows.length){const tr=el("tr"),td=el("td","empty","No findings match these filters. Clear the search or choose All.");td.colSpan=6;tr.append(td);tb.append(tr)}
+ rows.forEach(i=>{const tr=el("tr","row");tr.tabIndex=0;const t=el("span","tag",i.risk);t.style.background=`var(--${i.risk})`;
+  const r=el("td");r.append(t);const qd=el("td",i.quantum==="vulnerable"?"q":"",i.quantum==="vulnerable"?"Vulnerable":i.quantum==="weakened"?"Weakened":i.quantum==="resistant"?"Resistant":"n/a");
+  tr.append(r,el("td",null,i.algorithm),el("td",null,i.category),qd,el("td",null,[i.keySize&&i.keySize+" bit",i.mode].filter(Boolean).join(" / ")||"n/a"),el("td",null,i.occurrences.length));
+  const d=el("tr","det");d.hidden=true;const dt=el("td");dt.colSpan=6;
+  i.reasons.forEach(x=>dt.append(el("p",null,x)));if(i.recommendation)dt.append(el("p",null,"Fix: "+i.recommendation));
+  i.occurrences.slice(0,50).forEach(o=>dt.append(el("div","loc",`${o.file}:${o.line}${o.language?"  ("+o.language+")":""}`)));
+  d.append(dt);const tg=()=>d.hidden=!d.hidden;tr.onclick=tg;tr.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();tg()}};tb.append(tr,d)})}
+["q","sev","cat"].forEach(k=>$(k).addEventListener("input",render));render();
+</script></main></body></html>
